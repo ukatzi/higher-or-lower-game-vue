@@ -102,21 +102,24 @@ watch(nsfwContent, imageLoader);
 </script>
 
 <template>
-    <div>Score: {{ score }} <br>
-      Max Score: {{ maxScore }}
+    <div id="score">
+      <div>
+        Score: {{ score }} <br>
+        Max Score: {{ maxScore }}
+      </div>
     </div>
-    <div v-if="loading"> 
+    <div v-if="loading" id="buttons"> 
       <div id="firstChoose">
-        <button @click="updater(count1 >= count2)" :disabled="!loading">
+        <button @click="updater(count1 >= count2)" :disabled="!loading" id="firstButton">
           <h1> {{ tag1 }} </h1>
-          <img :src="href1" height="750" alt="Image couldn't load" v-if="!er1"/>
+          <img :src="href1" alt="Image couldn't load" v-if="!er1"/>
           <h1 v-else> Image couldn't load </h1>
         </button>
       </div>
       <div id="secondChoose">
-        <button @click="updater(count2 >= count1)" :disabled="!loading">
+        <button @click="updater(count2 >= count1)" :disabled="!loading" id="secondButton">
           <h1> {{ tag2 }}</h1>
-          <img :src="href2" height="750" alt="Image couldn't load" v-if="!er2"/>
+          <img :src="href2"  alt="Image couldn't load" v-if="!er2"/>
           <h1 v-else> Image couldn't load </h1>
         </button>
       </div>
@@ -142,16 +145,55 @@ watch(nsfwContent, imageLoader);
 <style scoped>
   #firstChoose{
     text-align: center;
-    border: 5px solid black;
-    width: 300px;
+    
   }
+
   #secondChoose{
     text-align: center;
   }
+
   #toggles{
-    display: flex;
-    align-content: start;
-    text-align: left;
+    position: fixed;
+    top: 10px;
+    left: 10px;
     height: 80px;
+  }
+
+  #firstButton{
+    position: fixed;
+    top: 30%;
+    left: 28%;
+
+    height: 60%;
+    width: 20%;
+  }
+  #firstButton img{
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  #secondButton{
+    position: fixed;
+    top: 30%;
+    left: 52%;
+
+    height: 60%;
+    width: 20%;
+  }
+  #secondButton img{
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  #score{
+    position: fixed;
+    top: 20%;
+    left: 48%;
+  }
+
+  #buttons{
+    justify-content: space-around;
   }
 </style>
