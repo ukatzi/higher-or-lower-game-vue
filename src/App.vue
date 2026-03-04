@@ -2,18 +2,19 @@
 import {ref, watch} from 'vue';
 
 const nsfwContent = ref(false);
-const count = 100;
+const maxTagCount = 100;
 const anTime = 600, waitTime = 900;
 const anFrames = 50;
-const tag1 = ref(""), tag2 = ref(""), loading = ref(true), firstLoad = ref(false); 
-const href1 = ref(""), href2 = ref("");
-const count1 = ref(""), count2 = ref("");
-const countAn1 = ref("???"), countAn2 = ref("???");
+const tag = ref(["", ""]);
+const loading = ref(true), firstLoad = ref(false); 
+const href = ref(["", ""]);
+const count = ref(["", ""]);
+const countAn = ref(["???", "???"]);
 
-const er1 = ref(false), er2 = ref(false);
+const er = ref([false, false]);
 const score = ref("0"), maxScore = ref("0");
 
-var imageCash1 = {
+var imageCash = [{
   "sfw":{
     status: 0,
     src:""
@@ -22,8 +23,7 @@ var imageCash1 = {
     status: 0,
     src:""
   }
-};
-var imageCash2 = {
+},{
   "sfw":{
     status: 0,
     src:""
@@ -32,10 +32,10 @@ var imageCash2 = {
     status: 0,
     src:""
   }
-};
+}];
 
 function rndGen(){
-  return Math.ceil(Math.random() * count);
+  return Math.ceil(Math.random() * maxTagCount);
 }
 async function updater(isCorrect){
   if(loading.value == false){ return;}
@@ -43,12 +43,10 @@ async function updater(isCorrect){
 
   if(firstLoad.value){
     await Promise.all([
-      countAnimator1(),
-      countAnimator2()
+      countAnimator(0),
+      countAnimator(1)
     ]);
   }
-
-  console.log(123);
 
   if(isCorrect){
     score.value++;
@@ -63,28 +61,26 @@ async function updater(isCorrect){
   while(p2 == p1){
     p2 = rndGen();
   }
-  await Promise.all([updater1(p1), updater2(p2)]);  
+  await Promise.all([update(p1, 0), update(p2, 1)]);  
 
-  resetImageCash();
-  await Promise.all([imageLoader1(), imageLoader2()]);
+  resetImageCash(0);
+  resetImageCash(1);
 
   firstLoad.value = true;
   loading.value = true;
   return;
 }
 
-function resetImageCash(){
-  imageCash1["nsfw"]["status"] = 0;
-  imageCash1["sfw"]["status"] = 0;
-  imageCash2["nsfw"]["status"] = 0;
-  imageCash2["sfw"]["status"] = 0;
+function resetImageCash(prop){
+  imageCash[prop]["nsfw"]["status"] = 0;
+  imageCash[prop]["sfw"]["status"] = 0;
 }
 
-async function countAnimator1(){
+async function countAnimator(prop){
   for(var i = 0; i < anFrames; i++){
     await new Promise(function(resolve){
       setTimeout(function(){
-        countAn1.value = Math.ceil((i + 1) * (count1.value / anFrames));
+        countAn.value[prop] = Math.ceil((i + 1) * (count.value[prop] / anFrames));
         resolve(null);
       }, anTime / anFrames)
     });
@@ -96,26 +92,7 @@ async function countAnimator1(){
     }, waitTime)
   });
 
-  countAn1.value = "???";
-  return;
-}
-async function countAnimator2(){
-  for(var i = 0; i < anFrames; i++){
-    await new Promise(function(resolve){
-      setTimeout(function(){
-        countAn2.value = Math.ceil((i + 1) * (count2.value / anFrames));
-        resolve(null);
-      }, anTime / anFrames)
-    });
-  }
-
-  await new Promise(function(resolve){
-    setTimeout(function(){
-      resolve(null);
-    }, waitTime)
-  });
-
-  countAn2.value = "???";
+  countAn.value[prop] = "???";
   return;
 }
 
@@ -123,86 +100,50 @@ async function imageLoader(){
   if(loading.value == false){ return;}
   loading.value = false; 
 
-  await Promise.all([imageLoader1(), imageLoader2()]);
+  await Promise.all([imageLoad(0), imageLoad(1)]);
 
   loading.value = true;
   return;
 }
 
-async function imageLoader1(){
-  //console.log(imageCash1[nsfwContent.value ? "nsfw" : "sfw"]);
-  if(imageCash1[nsfwContent.value ? "nsfw" : "sfw"].status == 0){
-    var postF = await fetch(`https://api.rule34.gg/getRandomPosts?amount=1&tags=${tag1.value}` + (nsfwContent.value ? "" : "&tags=sfw"));
+async function imageLoad(prop){
+  //console.log(imageCash[prop][nsfwContent.value ? "nsfw" : "sfw"]);
+  if(imageCash[prop][nsfwContent.value ? "nsfw" : "sfw"].status == 0){
+    var postF = await fetch(`https://api.rule34.gg/getRandomPosts?amount=1&tags=${tag.value[prop]}` + (nsfwContent.value ? "" : "&tags=sfw"));
     var post = await postF.json();
   
     if(post["posts"].length > 0){
-      href1.value = post["posts"][0]["preview"]["file"];
-      er1.value = false;
-      imageCash1[nsfwContent.value ? "nsfw" : "sfw"].src = post["posts"][0]["preview"]["file"];
-      imageCash1[nsfwContent.value ? "nsfw" : "sfw"].status = 2;
+      href.value[prop] = post["posts"][0]["preview"]["file"];
+      er.value[prop] = false;
+      imageCash[prop][nsfwContent.value ? "nsfw" : "sfw"].src = post["posts"][0]["preview"]["file"];
+      imageCash[prop][nsfwContent.value ? "nsfw" : "sfw"].status = 2;
     }
     else{
-      href1.value = "";
-      er1.value = true;
-      imageCash1[nsfwContent.value ? "nsfw" : "sfw"].status = 1;
+      href.value[prop] = "";
+      er.value[prop] = true;
+      imageCash[prop][nsfwContent.value ? "nsfw" : "sfw"].status = 1;
     }
   }
-  else if(imageCash1[nsfwContent.value ? "nsfw" : "sfw"].status == 1){
-    href1.value = "";
-    er1.value = true;
+  else if(imageCash[prop][nsfwContent.value ? "nsfw" : "sfw"].status == 1){
+    href.value[prop] = "";
+    er.value[prop] = true;
   }
   else{
-    href1.value = imageCash1[nsfwContent.value ? "nsfw" : "sfw"].src;
-    er1.value = false;
+    href.value[prop] = imageCash[prop][nsfwContent.value ? "nsfw" : "sfw"].src;
+    er.value[prop] = false;
   }
 }
 
-async function imageLoader2(){
-  if(imageCash2[nsfwContent.value ? "nsfw" : "sfw"].status == 0){
-    var postF = await fetch(`https://api.rule34.gg/getRandomPosts?amount=1&tags=${tag2.value}` + (nsfwContent.value ? "" : "&tags=sfw"));
-    var post = await postF.json();
-  
-    if(post["posts"].length > 0){
-      href2.value = post["posts"][0]["preview"]["file"];
-      er2.value = false;
-      imageCash2[nsfwContent.value ? "nsfw" : "sfw"].src = post["posts"][0]["preview"]["file"];
-      imageCash2[nsfwContent.value ? "nsfw" : "sfw"].status = 2;
-    }
-    else{
-      href2.value = "";
-      er2.value = true;
-      imageCash2[nsfwContent.value ? "nsfw" : "sfw"].status = 1;
-    }
-  }
-  else if(imageCash2[nsfwContent.value ? "nsfw" : "sfw"].status == 1){
-    href2.value = "";
-    er2.value = true;
-  }
-  else{
-    href2.value = imageCash2[nsfwContent.value ? "nsfw" : "sfw"].src;
-    er2.value = false;
-  }
-}
-
-async function updater1(pos){
-  var tagFetch = await fetch(`https://api.rule34.gg/getTags?raw=true&limit=${count + 10}&type=is_character`);
+async function update(pos, prop){
+  var tagFetch = await fetch(`https://api.rule34.gg/getTags?raw=true&limit=${maxTagCount + 10}&type=is_character`);
   var tagList = await tagFetch.json();
   
-  tag1.value = tagList["tags"][pos]["tag_name"];
-  count1.value = tagList["tags"][pos]["count"];
+  tag.value[prop] = tagList["tags"][pos]["tag_name"];
+  count.value[prop] = tagList["tags"][pos]["count"];
   
-  await imageLoader1();
+  await imageLoad(prop);
 }
 
-async function updater2(pos){
-  var tagFetch = await fetch(`https://api.rule34.gg/getTags?raw=true&limit=${count + 10}&type=is_character`);
-  var tagList = await tagFetch.json();  
-  
-  tag2.value = tagList["tags"][pos]["tag_name"];
-  count2.value = tagList["tags"][pos]["count"];
-  
-  await imageLoader2();
-}
 updater();
 
 watch(nsfwContent, imageLoader);
@@ -218,18 +159,18 @@ watch(nsfwContent, imageLoader);
     </div>
     <div v-if="firstLoad" id="buttons"> 
       <div id="firstChoose">
-        <button @click="updater(count1 >= count2)" :disabled="!loading" id="firstButton">
-          <h1> {{ tag1 }} </h1>
-          <h1> {{ countAn1 }}</h1>
-          <img :src="href1" alt="Image couldn't load" v-if="!er1"/>
+        <button @click="updater(count[0] >= count[1])" :disabled="!loading" id="firstButton">
+          <h1> {{ tag[0] }} </h1>
+          <h1> {{ countAn[0] }}</h1>
+          <img :src="href[0]" alt="Image couldn't load" v-if="!er[0]"/>
           <h1 v-else> Image couldn't load </h1>
         </button>
       </div>
       <div id="secondChoose">
-        <button @click="updater(count2 >= count1)" :disabled="!loading" id="secondButton">
-          <h1> {{ tag2 }}</h1>
-          <h1> {{ countAn2 }}</h1>
-          <img :src="href2"  alt="Image couldn't load" v-if="!er2"/>
+        <button @click="updater(count[1] >= count[0])" :disabled="!loading" id="secondButton">
+          <h1> {{ tag[1] }}</h1>
+          <h1> {{ countAn[1] }}</h1>
+          <img :src="href[1]"  alt="Image couldn't load" v-if="!er[1]"/>
           <h1 v-else> Image couldn't load </h1>
         </button>
       </div>
