@@ -5,13 +5,34 @@ const nsfwContent = ref(false);
 const count = 100;
 const anTime = 600, waitTime = 900;
 const anFrames = 50;
-const tag1 = ref(""), tag2 = ref(""), loading = ref("true"), firstLoad = ref("false"); 
+const tag1 = ref(""), tag2 = ref(""), loading = ref(true), firstLoad = ref(false); 
 const href1 = ref(""), href2 = ref("");
 const count1 = ref(""), count2 = ref("");
 const countAn1 = ref("???"), countAn2 = ref("???");
 
-const er1 = ref("false"), er2 = ref("false");
+const er1 = ref(false), er2 = ref(false);
 const score = ref("0"), maxScore = ref("0");
+
+var imageCash1 = {
+  "sfw":{
+    status: 0,
+    src:""
+  },
+  "nsfw":{
+    status: 0,
+    src:""
+  }
+};
+var imageCash2 = {
+  "sfw":{
+    status: 0,
+    src:""
+  },
+  "nsfw":{
+    status: 0,
+    src:""
+  }
+};
 
 function rndGen(){
   return Math.ceil(Math.random() * count);
@@ -44,11 +65,19 @@ async function updater(isCorrect){
   }
   await Promise.all([updater1(p1), updater2(p2)]);  
 
-  await imageLoader();
+  resetImageCash();
+  await Promise.all([imageLoader1(), imageLoader2()]);
 
   firstLoad.value = true;
   loading.value = true;
   return;
+}
+
+function resetImageCash(){
+  imageCash1["nsfw"]["status"] = 0;
+  imageCash1["sfw"]["status"] = 0;
+  imageCash2["nsfw"]["status"] = 0;
+  imageCash2["sfw"]["status"] = 0;
 }
 
 async function countAnimator1(){
@@ -101,32 +130,57 @@ async function imageLoader(){
 }
 
 async function imageLoader1(){
-  var postF = await fetch(`https://api.rule34.gg/getRandomPosts?amount=1&tags=${tag1.value}` + (nsfwContent.value ? "" : "&tags=sfw"));
-  var post = await postF.json();
+  //console.log(imageCash1[nsfwContent.value ? "nsfw" : "sfw"]);
+  if(imageCash1[nsfwContent.value ? "nsfw" : "sfw"].status == 0){
+    var postF = await fetch(`https://api.rule34.gg/getRandomPosts?amount=1&tags=${tag1.value}` + (nsfwContent.value ? "" : "&tags=sfw"));
+    var post = await postF.json();
   
-  if(post["posts"].length > 0){
-    href1.value = post["posts"][0]["preview"]["file"];
-    er1.value = false;
+    if(post["posts"].length > 0){
+      href1.value = post["posts"][0]["preview"]["file"];
+      er1.value = false;
+      imageCash1[nsfwContent.value ? "nsfw" : "sfw"].src = post["posts"][0]["preview"]["file"];
+      imageCash1[nsfwContent.value ? "nsfw" : "sfw"].status = 2;
+    }
+    else{
+      href1.value = "";
+      er1.value = true;
+      imageCash1[nsfwContent.value ? "nsfw" : "sfw"].status = 1;
+    }
   }
-  else{
+  else if(imageCash1[nsfwContent.value ? "nsfw" : "sfw"].status == 1){
     href1.value = "";
     er1.value = true;
+  }
+  else{
+    href1.value = imageCash1[nsfwContent.value ? "nsfw" : "sfw"].src;
+    er1.value = false;
   }
 }
 
 async function imageLoader2(){
-  var postF = await fetch(`https://api.rule34.gg/getRandomPosts?amount=1&tags=${tag2.value}` + (nsfwContent.value ? "" : "&tags=sfw"));
-  var post = await postF.json();
+  if(imageCash2[nsfwContent.value ? "nsfw" : "sfw"].status == 0){
+    var postF = await fetch(`https://api.rule34.gg/getRandomPosts?amount=1&tags=${tag2.value}` + (nsfwContent.value ? "" : "&tags=sfw"));
+    var post = await postF.json();
   
-  //console.log(post);
-
-  if(post["posts"].length > 0){
-    href2.value = post["posts"][0]["preview"]["file"];
-    er2.value = false;
+    if(post["posts"].length > 0){
+      href2.value = post["posts"][0]["preview"]["file"];
+      er2.value = false;
+      imageCash2[nsfwContent.value ? "nsfw" : "sfw"].src = post["posts"][0]["preview"]["file"];
+      imageCash2[nsfwContent.value ? "nsfw" : "sfw"].status = 2;
+    }
+    else{
+      href2.value = "";
+      er2.value = true;
+      imageCash2[nsfwContent.value ? "nsfw" : "sfw"].status = 1;
+    }
   }
-  else{
+  else if(imageCash2[nsfwContent.value ? "nsfw" : "sfw"].status == 1){
     href2.value = "";
     er2.value = true;
+  }
+  else{
+    href2.value = imageCash2[nsfwContent.value ? "nsfw" : "sfw"].src;
+    er2.value = false;
   }
 }
 
